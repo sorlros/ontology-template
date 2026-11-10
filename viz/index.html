@@ -1,0 +1,651 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>온톨로지 탐색기</title>
+<style>
+/* 색은 데이터에만 쓴다: 파랑(--hue) = 지금 보고 있는 것, 빨강(--negative) = 문서 간 값 충돌. 나머지는 무채색. */
+:root {
+  color-scheme: light dark;
+  --ground: #f2f4f7; --surface: #ffffff; --active: #e4e7eb;
+  --border: #dfe2e6; --rule: #eceef1; --control: #c9cdd3;
+  --text: #0a0a0a; --muted: #5a6068; --primary: #1d1f20; --primary-ink: #ffffff;
+  --hue: #1d5fbf; --node-far: #8a8f96; --edge: #7d838b;
+  --negative: #c4242a; --pill-negative-bg: #ffedea; --pill-negative-ink: #831c1e;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ground: #000000; --surface: #111111; --active: #242424;
+    --border: #262626; --rule: #1b1b1b; --control: #444444;
+    --text: #ffffff; --muted: #b4b4b4; --primary: #ffffff; --primary-ink: #000000;
+    --hue: #6ea8ff; --node-far: #777777; --edge: #8c8c8c;
+    --negative: #e5566f; --pill-negative-bg: #2c1a20; --pill-negative-ink: #f08a9c;
+  }
+}
+* { box-sizing: border-box; }
+/* 열 3개: 사이드바 240 + 작업 영역 + 근거 360. 간격은 전부 12 또는 그 배수. */
+body { margin: 0; background: var(--ground); color: var(--text); font: 14px/20px system-ui, sans-serif; height: 100vh;
+  display: grid; grid-template-columns: 240px minmax(0, 1fr) 360px; grid-template-rows: auto minmax(0, 1fr);
+  grid-template-areas: "brand main rail" "docs main rail"; }
+button, input { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--hue); outline-offset: 2px; }
+[hidden] { display: none !important; }
+.num { font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+/* 사이드바 */
+#brand, #docs { border-right: 1px solid var(--border); padding: 0 12px; }
+#brand { grid-area: brand; padding-top: 20px; }
+.product { display: flex; align-items: center; gap: 10px; padding: 0 8px; }
+.product svg { flex: none; }
+.product b { display: block; font-weight: 600; }
+.product small { display: block; font-size: 12px; line-height: 16px; color: var(--muted); }
+nav { display: grid; gap: 2px; margin-top: 20px; }
+nav button { height: 32px; padding: 0 8px; border: 0; border-radius: 6px; background: none; text-align: left; color: var(--muted); }
+nav button:hover { color: var(--text); }
+nav button[aria-current=page] { background: var(--active); color: var(--text); }
+#docs { grid-area: docs; overflow: auto; padding-top: 28px; padding-bottom: 12px; }
+#docs h2 { margin: 0 8px 6px; font-size: 12px; line-height: 16px; font-weight: 400; color: var(--muted); }
+#docs button { display: block; width: 100%; padding: 6px 8px; border: 0; border-radius: 6px; background: none; text-align: left; }
+#docs button:hover, #docs button[aria-pressed=true] { background: var(--active); }
+#upload { margin: 0 8px 12px; }
+.add { display: flex; justify-content: center; height: 32px; border: 1px solid var(--control); border-radius: 6px; background: var(--surface); color: var(--text); font-weight: 500; cursor: pointer; }
+.add:hover { background: var(--active); }
+#file:focus-visible + .add { outline: 2px solid var(--hue); outline-offset: 2px; }
+#upload[aria-busy=true] .add { opacity: 0.5; pointer-events: none; }
+#upload p { margin: 6px 0 0; font-size: 12px; line-height: 16px; color: var(--muted); overflow-wrap: anywhere; }
+#upload p.bad { color: var(--negative); }
+#upload p.ok { color: var(--text); }
+#upload p button { margin-left: 6px; padding: 0; border: 0; background: none; font-weight: 500; text-decoration: underline; color: var(--text); }
+#docs span, #docs small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#docs small { font-size: 12px; line-height: 16px; color: var(--muted); }
+
+/* 작업 영역 */
+main { grid-area: main; overflow: auto; padding: 28px 24px 24px; }
+.title { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; justify-content: space-between; margin-bottom: 24px; }
+h1 { margin: 0; font-size: 24px; line-height: 32px; font-weight: 600; }
+.title p { margin: 4px 0 0; color: var(--muted); }
+.primary { height: 36px; padding: 0 14px; border: 0; border-radius: 6px; background: var(--primary); color: var(--primary-ink); font-weight: 500; }
+.seg { display: inline-flex; padding: 2px; border-radius: 8px; background: var(--active); }
+.seg button { height: 32px; padding: 0 12px; border: 0; border-radius: 6px; background: none; color: var(--muted); }
+.seg button[aria-pressed=true] { background: var(--surface); color: var(--text); }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; }
+.card + .card { margin-top: 12px; }
+.card > header { display: flex; flex-wrap: wrap; gap: 8px 20px; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--rule); }
+.card h2 { margin: 0; font-size: 16px; line-height: 24px; font-weight: 600; }
+.card > header .end { margin-left: auto; display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; }
+label { display: flex; gap: 8px; align-items: center; color: var(--muted); }
+input[type=text] { height: 32px; width: 180px; padding: 0 10px; border: 1px solid var(--control); border-radius: 6px; background: var(--surface); color: var(--text); }
+input[type=range] { width: 120px; accent-color: var(--primary); }
+output { width: 32px; color: var(--text); }
+#graph { height: clamp(460px, 64vh, 700px); }
+#graph-note { padding: 24px 16px; color: var(--muted); }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; padding: 10px 16px; border-top: 1px solid var(--rule); font-size: 12px; line-height: 16px; color: var(--muted); }
+.legend span { display: inline-flex; gap: 6px; align-items: center; white-space: nowrap; }
+.legend span:last-child { white-space: normal; }
+.legend svg { flex: none; }
+
+/* 표 */
+.scroll { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; }
+th, td { padding: 0 12px; height: 44px; text-align: left; font-weight: 400; border-top: 1px solid var(--rule); white-space: nowrap; }
+th:first-child, td:first-child { padding-left: 16px; }
+th:last-child, td:last-child { padding-right: 16px; }
+thead th { height: 40px; border-top: 0; font-size: 12px; line-height: 16px; color: var(--muted); vertical-align: bottom; padding-bottom: 8px; }
+thead th.num, td.num { text-align: right; }
+thead th.doc { text-align: center; padding-left: 4px; padding-right: 4px; }
+.matrix .conf i { display: none; }  /* 대조표에서는 점의 수가 신뢰도를 말한다 */
+thead th.doc b { display: block; font-weight: 400; color: var(--text); }
+tbody th { font-weight: 500; }
+td.muted { color: var(--muted); }
+td.doc { text-align: center; padding-left: 4px; padding-right: 4px; }
+.link { padding: 0; border: 0; background: none; text-decoration: underline; text-decoration-color: var(--control); text-underline-offset: 3px; }
+.link:hover { text-decoration-color: currentColor; }
+.act { height: 28px; padding: 0 8px; border: 0; border-radius: 6px; background: none; font-weight: 500; }
+.act:hover, .act[aria-pressed=true] { background: var(--active); }
+.dot { width: 28px; height: 28px; padding: 0; border: 0; border-radius: 6px; background: none; }
+.dot::before { content: ""; display: block; width: 8px; height: 8px; margin: auto; border-radius: 50%; background: var(--text); }
+.dot:hover, .dot[aria-pressed=true] { background: var(--active); }
+[aria-pressed=true].dot::before { background: var(--hue); }
+.pill { display: inline-block; margin-left: 8px; padding: 0 7px; border-radius: 4px; font-size: 12px; line-height: 20px; font-weight: 500;
+  background: var(--pill-negative-bg); color: var(--pill-negative-ink); }
+.conf { display: inline-flex; gap: 8px; align-items: center; }
+.conf i { width: 40px; height: 3px; border-radius: 2px; background: var(--active); }
+.conf i::before { content: ""; display: block; height: 100%; width: var(--w); border-radius: 2px; background: var(--text); }
+.empty { margin: 16px; padding: 10px 12px; border: 1px dashed var(--control); border-radius: 8px; color: var(--muted); }
+
+/* 근거 */
+aside { grid-area: rail; overflow: auto; border-left: 1px solid var(--border); padding: 28px 16px 24px; }
+aside h2 { margin: 0; font-size: 16px; line-height: 32px; font-weight: 600; }
+#ev-title { margin: 4px 0 16px; color: var(--muted); overflow-wrap: anywhere; }
+aside .empty { margin: 0; }
+#ev-actions:not(:empty) { margin: -8px 0 16px; }
+#ev-actions p { margin: 0 0 8px; color: var(--muted); }
+#ev-actions p.bad { color: var(--negative); }
+#ev-actions button { height: 32px; padding: 0 12px; margin-right: 8px; border: 1px solid var(--control); border-radius: 6px; background: var(--surface); font-weight: 500; }
+#ev-actions button:hover { background: var(--active); }
+#ev-actions button.danger { border-color: var(--negative); color: var(--negative); }
+.ev { padding: 12px 14px; }
+.ev + .ev { margin-top: 12px; }
+.ev b { display: block; font-weight: 600; }
+.ev small { display: block; font-size: 12px; line-height: 16px; color: var(--muted); }
+.ev pre { white-space: pre-wrap; overflow-wrap: anywhere; margin: 10px 0 0; padding-top: 10px; border-top: 1px solid var(--rule); font: 12px/18px ui-monospace, monospace; }
+
+#msg { margin: 0; }
+
+@media (max-width: 1100px) {
+  body { height: auto; min-height: 100vh; grid-template-columns: 220px minmax(0, 1fr); grid-template-rows: auto auto 1fr;
+    grid-template-areas: "brand main" "docs main" "docs rail"; }
+  main, aside, #docs { overflow: visible; }
+  .conf i { display: none; }
+  aside { border-left: 0; border-top: 1px solid var(--border); padding-top: 20px; }
+}
+@media (max-width: 700px) {
+  body { display: flex; flex-direction: column; }
+  #docs { order: 1; }
+  tbody th { position: sticky; left: 0; background: var(--surface); }
+  th, td { padding: 0 8px; }
+  #brand, #docs { border-right: 0; }
+  #brand { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; justify-content: space-between; padding: 8px 16px; border-bottom: 1px solid var(--border); }
+  .product { padding: 0; }
+  .product small { display: none; }
+  nav { display: flex; margin: 0; }
+  nav button { height: 44px; padding: 0 12px; }
+  main { padding: 20px 16px; }
+  aside { padding: 20px 16px; }
+  #docs { border-top: 1px solid var(--border); padding: 20px 8px; }
+  #graph { height: 360px; }
+  .card > header .end { margin-left: 0; }
+  .dot, .act { min-width: 44px; height: 44px; }
+  th, td { height: 48px; }
+}
+</style>
+</head>
+<body>
+<div id="brand">
+  <div class="product">
+    <!-- 제품 표식: 주어 → 목적어, 트리플 하나 -->
+    <svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true"><circle cx="6" cy="20" r="4.5" fill="currentColor"/><path d="M9.5 16.5 18 8" stroke="currentColor" stroke-width="2" fill="none"/><circle cx="21" cy="6" r="4.5" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+    <div><b>온톨로지 탐색기</b><small id="scope"></small></div>
+  </div>
+  <nav aria-label="화면">
+    <button id="nav-graph" type="button">엔티티 탐색</button>
+    <button id="nav-facts" type="button">사실 대조표</button>
+  </nav>
+</div>
+<section id="docs" aria-labelledby="docs-h">
+  <h2 id="docs-h">문서</h2>
+  <div id="upload" hidden>
+    <input id="file" class="sr" type="file" accept=".md,.csv" multiple>
+    <label for="file" class="add">문서 추가</label>
+    <p id="upload-note"></p>
+    <div id="upload-log" role="status"></div>
+  </div>
+  <div id="doc-list"></div>
+</section>
+<main>
+  <div class="title">
+    <div>
+      <h1 id="h1">온톨로지 탐색기</h1>
+      <p id="finding" role="status">데이터를 불러오는 중입니다.</p>
+    </div>
+    <button id="to-conflicts" class="primary" type="button" hidden></button>
+    <div id="fact-filter" class="seg" role="group" aria-label="사실 범위" hidden>
+      <button id="f-all" type="button"></button>
+      <button id="f-conflict" type="button"></button>
+    </div>
+  </div>
+  <p id="msg" class="empty" hidden></p>
+  <div id="view-graph" hidden>
+    <section class="card" aria-labelledby="graph-h">
+      <header>
+        <h2 id="graph-h">관계 그래프</h2>
+        <div class="end">
+          <label>중심 엔티티 <input id="search" type="text" list="entity-list" autocomplete="off"></label>
+          <datalist id="entity-list"></datalist>
+          <label>신뢰도 하한 <input id="minconf" type="range" min="0" max="1" step="0.05" value="0"> <output id="minconf-out" class="num" for="minconf">0.00</output></label>
+        </div>
+      </header>
+      <div id="graph" role="img" aria-label="중심 엔티티에서 2홉 안의 관계 그래프. 같은 내용이 아래 표에 있습니다."></div>
+      <p id="graph-note" hidden></p>
+      <div id="legend" class="legend"></div>
+    </section>
+    <section class="card" aria-labelledby="entity-h">
+      <header><h2 id="entity-h"></h2></header>
+      <div id="entity-facts" class="scroll"></div>
+    </section>
+  </div>
+  <div id="view-facts" hidden>
+    <section class="card" aria-label="사실 대조표">
+      <div id="all-facts" class="scroll"></div>
+    </section>
+  </div>
+</main>
+<aside aria-labelledby="ev-h">
+  <h2 id="ev-h">근거 원문</h2>
+  <p id="ev-title" aria-live="polite"></p>
+  <div id="ev-actions"></div>
+  <div id="evidence"><p class="empty">사실이나 문서를 고르면 그 문서의 원문 구절이 여기에 나옵니다.</p></div>
+</aside>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.30.2/cytoscape.min.js"></script>
+<script>
+"use strict";
+
+// ---- 순수 로직 (DOM 무관) ----
+
+// 신뢰도 minConf 이상인 엣지만 방향 무시로 따라가 center 에서 hops 홉 안의 노드를 {id: 홉수} 로 돌려준다.
+function neighborhood(edges, center, hops, minConf) {
+  const adj = new Map();
+  for (const e of edges) {
+    if (e.confidence < minConf) continue;
+    if (!adj.has(e.source)) adj.set(e.source, []);
+    if (!adj.has(e.target)) adj.set(e.target, []);
+    adj.get(e.source).push(e.target);
+    adj.get(e.target).push(e.source);
+  }
+  const dist = { [center]: 0 };
+  let frontier = [center];
+  for (let h = 1; h <= hops; h++) {
+    const next = [];
+    for (const id of frontier) for (const n of adj.get(id) || []) {
+      if (!(n in dist)) { dist[n] = h; next.push(n); }
+    }
+    frontier = next;
+  }
+  return dist;
+}
+
+// 사실 대조표 칸(사실 f, 문서 docId)에 해당하는 근거 청크 id 목록.
+function cellChunks(data, f, docId) {
+  return f.chunks.filter(c => data.evidence[c] && data.evidence[c].doc === docId);
+}
+
+// 최소한의 계약 구조 확인. 문제가 있으면 사유 문자열, 없으면 null.
+function validate(d) {
+  if (!d || typeof d !== "object") return "JSON 최상위가 객체가 아닙니다.";
+  for (const k of ["nodes", "edges", "facts", "docs"]) if (!Array.isArray(d[k])) return `"${k}" 배열이 없습니다.`;
+  if (!d.evidence || typeof d.evidence !== "object") return `"evidence" 객체가 없습니다.`;
+  return null;
+}
+
+// 같은 주어·속성에서 값이 갈리는 곳의 수(충돌 사실의 수가 아니라 충돌 지점의 수).
+function conflictSpots(facts) {
+  return new Set(facts.filter(f => f.conflict).map(f => f.s + "\u0000" + f.p)).size;
+}
+
+// 긴 정수 값은 자릿수 구분을 넣어 보여 준다. 날짜·이름은 그대로.
+function showValue(v) {
+  return /^\d{5,}$/.test(v) ? Number(v).toLocaleString("ko-KR") : v;
+}
+
+if (typeof module !== "undefined") module.exports = { neighborhood, cellChunks, validate, conflictSpots, showValue };
+
+// ---- 화면 ----
+if (typeof document !== "undefined") (function () {
+  const $ = id => document.getElementById(id);
+  const el = (tag, cls, text) => { const x = document.createElement(tag); if (cls) x.className = cls; if (text != null) x.textContent = text; return x; };
+  const SHAPES = ["ellipse", "round-rectangle", "diamond", "hexagon", "triangle"];
+  // 노드 이름을 둘 수 있는 방향: [가로, 세로, 각도(화면 y 는 아래로 증가), 여백 x, 여백 y]. 앞에 있을수록 우선한다.
+  const LABEL_DIRS = [["center", "bottom", Math.PI / 2, 0, 5], ["center", "top", -Math.PI / 2, 0, -5], ["right", "center", 0, 6, 0], ["left", "center", Math.PI, -6, 0],
+    ["right", "bottom", Math.PI / 4, 2, 2], ["left", "bottom", 3 * Math.PI / 4, -2, 2], ["right", "top", -Math.PI / 4, 2, -2], ["left", "top", -3 * Math.PI / 4, -2, -2]];
+  let data, cy, center = null, view = "graph", onlyConflict = false, picked = null;
+  const nodeById = {}, nodeByLabel = {}, docById = {}, typeShape = {};
+
+  function showMsg(text) {
+    $("finding").textContent = "";
+    $("msg").textContent = text; $("msg").hidden = false;
+    $("view-graph").hidden = true; $("view-facts").hidden = true;
+  }
+
+  async function load() {
+    const url = new URLSearchParams(location.search).get("data") || "graph.json";
+    $("scope").textContent = url;
+    let d;
+    try {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      d = await res.json();
+    } catch (e) {
+      showMsg(`데이터를 불러오지 못했습니다(${url}): ${e.message}. 파일이 있는지, JSON 형식이 맞는지 확인하세요.`);
+      return;
+    }
+    const bad = validate(d);
+    if (bad) return showMsg("데이터 형식이 올바르지 않습니다: " + bad);
+    if (d.nodes.length === 0 && d.facts.length === 0) return showMsg("표시할 데이터가 없습니다. 먼저 문서를 적재하고 내보내기를 실행하세요.");
+    data = d;
+    data.facts.sort((a, b) => a.s.localeCompare(b.s, "ko") || a.p.localeCompare(b.p) || b.confidence - a.confidence);
+    for (const n of d.nodes) { nodeById[n.id] = n; nodeByLabel[n.label] = n; }
+    for (const x of d.docs) docById[x.id] = x;
+    [...new Set(d.nodes.map(n => n.type))].forEach((t, i) => typeShape[t] = SHAPES[i % SHAPES.length]);
+    const top = d.nodes.slice().sort((a, b) => b.degree - a.degree)[0];
+    if (top) center = top.id;
+    for (const n of d.nodes) $("entity-list").appendChild(el("option")).value = n.label;
+    renderDocs();
+    const h = location.hash.slice(1);
+    show(h.startsWith("facts") ? "facts" : "graph", h === "facts-conflict");
+  }
+
+  // 화면 전환
+  function show(name, conflictOnly) {
+    if (!data) return;
+    view = name; onlyConflict = !!conflictOnly;
+    for (const t of ["graph", "facts"]) {
+      $("view-" + t).hidden = t !== name;
+      if (t === name) $("nav-" + t).setAttribute("aria-current", "page"); else $("nav-" + t).removeAttribute("aria-current");
+    }
+    history.replaceState(null, "", "#" + name + (onlyConflict ? "-conflict" : ""));
+    renderTitle();
+    if (name === "graph") { renderGraph(); renderEntity(); } else renderAllFacts();
+  }
+  $("nav-graph").addEventListener("click", () => show("graph"));
+  $("nav-facts").addEventListener("click", () => show("facts"));
+  $("to-conflicts").addEventListener("click", () => show("facts", true));
+  $("f-all").addEventListener("click", () => show("facts", false));
+  $("f-conflict").addEventListener("click", () => show("facts", true));
+
+  function renderTitle() {
+    const spots = conflictSpots(data.facts), nConf = data.facts.filter(f => f.conflict).length;
+    $("h1").textContent = view === "graph" ? "엔티티 탐색" : "사실 대조표";
+    $("finding").textContent = (spots
+      ? `사실 ${data.facts.length}건 가운데 ${spots}곳에서 문서들이 서로 다른 값을 말합니다.`
+      : `사실 ${data.facts.length}건에서 문서 간 충돌이 없습니다.`) + ` 문서 ${data.docs.length}개, 엔티티 ${data.nodes.length}개.`;
+    $("to-conflicts").hidden = view !== "graph" || !spots;
+    $("to-conflicts").textContent = `충돌 ${spots}곳 대조하기`;
+    $("fact-filter").hidden = view !== "facts";
+    $("f-all").textContent = `전체 ${data.facts.length}`;
+    $("f-conflict").textContent = `충돌 ${nConf}`;
+    $("f-all").setAttribute("aria-pressed", !onlyConflict);
+    $("f-conflict").setAttribute("aria-pressed", onlyConflict);
+  }
+
+  // 근거 패널: 모두 textContent 로만 채운다. key 는 지금 고른 칸을 표시하는 데 쓴다.
+  function showEvidence(title, chunkIds, key) {
+    picked = key || null;
+    for (const b of document.querySelectorAll("[data-key]")) b.setAttribute("aria-pressed", b.dataset.key === picked);
+    $("ev-title").textContent = title; $("ev-actions").textContent = "";
+    const box = $("evidence"); box.textContent = "";
+    if (!chunkIds.length) { box.appendChild(el("p", "empty", "연결된 근거가 없습니다.")); return; }
+    for (const c of chunkIds) {
+      const ev = data.evidence[c], card = el("div", "card ev");
+      if (!ev) { card.textContent = "근거를 찾을 수 없습니다: " + c; box.appendChild(card); continue; }
+      const doc = docById[ev.doc];
+      card.append(el("b", null, doc ? doc.title : ev.doc),
+        el("small", null, [ev.heading, doc && doc.source, doc && doc.grade + "등급", doc && doc.date].filter(Boolean).join(" · ")),
+        el("pre", null, ev.text));
+      box.appendChild(card);
+    }
+  }
+  function keyed(btn, key) { btn.dataset.key = key; btn.setAttribute("aria-pressed", key === picked); return btn; }
+
+  // 문서 목록
+  function renderDocs() {
+    $("docs-h").textContent = `문서 ${data.docs.length}개`;
+    for (const d of data.docs) {
+      const b = keyed(el("button"), "doc:" + d.id); b.type = "button";
+      b.append(el("span", null, d.title), el("small", null, `${d.source} · ${d.grade}등급 · ${d.date}`));
+      b.addEventListener("click", () => {
+        showEvidence(`${d.title} 의 전체 구절`, Object.keys(data.evidence).filter(c => data.evidence[c].doc === d.id), "doc:" + d.id);
+        if (canEdit) offerDelete(d);
+      });
+      $("doc-list").appendChild(b);
+    }
+  }
+
+  // 사실 표. matrix 면 문서마다 열을 두고, 아니면 문서 수와 근거 버튼을 둔다.
+  function factTable(facts, matrix) {
+    const tb = el("table", matrix ? "matrix" : null), hr = el("tr");
+    const head = (text, cls) => { const th = el("th", cls, text); th.scope = "col"; hr.appendChild(th); return th; };
+    head("주어"); head("속성"); head("값"); head("신뢰도", "num");
+    if (matrix) for (const d of data.docs) {
+      const th = head(null, "doc"); th.title = d.title;
+      th.append(el("b", null, d.id), document.createTextNode(d.source), el("br"), document.createTextNode(d.grade + "등급"));
+    } else { head("문서", "num"); head("").appendChild(el("span", "sr", "근거")); }
+    tb.appendChild(el("thead")).appendChild(hr);
+    const body = tb.appendChild(el("tbody"));
+    let prev = null;
+    facts.forEach(f => {
+      const tr = body.appendChild(el("tr")), name = `${f.s} · ${f.p} · ${showValue(f.o)}`;
+      // 주어는 묶음의 첫 줄에만 보이게 쓴다. 화면 낭독기에는 줄마다 읽힌다.
+      const th = tr.appendChild(el("th")); th.scope = "row";
+      th.appendChild(entity(f.s, f.s === prev ? "sr" : null)); prev = f.s;
+      tr.appendChild(el("td", "muted", f.p));
+      const val = tr.appendChild(el("td", f.o_is_entity ? null : "num"));
+      val.style.textAlign = "left";
+      val.appendChild(f.o_is_entity ? entity(f.o) : document.createTextNode(showValue(f.o)));
+      if (f.conflict) val.appendChild(el("span", "pill", "충돌"));
+      const conf = tr.appendChild(el("td", "num")).appendChild(el("span", "conf", f.confidence.toFixed(2)));
+      conf.prepend(el("i")); conf.firstChild.style.setProperty("--w", f.confidence * 100 + "%");
+      if (matrix) for (const d of data.docs) {
+        const td = tr.appendChild(el("td", "doc"));
+        if (!f.docs.includes(d.id)) continue;
+        const key = `m:${name}:${d.id}`, b = keyed(el("button", "dot"), key); b.type = "button";
+        b.setAttribute("aria-label", `${d.title} 의 근거 보기`);
+        b.addEventListener("click", () => showEvidence(`${name} — ${d.title}`, cellChunks(data, f, d.id), key));
+        td.appendChild(b);
+      } else {
+        tr.appendChild(el("td", "num", f.docs.length + "개"));
+        const key = `e:${name}`, b = keyed(el("button", "act", "근거 보기"), key); b.type = "button";
+        b.addEventListener("click", () => showEvidence(name, f.chunks, key));
+        tr.appendChild(el("td", "num")).appendChild(b);
+      }
+    });
+    return tb;
+  }
+  // 엔티티 이름. 그래프에 있는 엔티티면 눌러서 중심으로 삼을 수 있다(그래프의 키보드 대안).
+  function entity(label, cls) {
+    const n = nodeByLabel[label];
+    if (!n || (view === "graph" && n.id === center)) return el("span", cls, label);
+    const b = el("button", "link" + (cls ? " " + cls : ""), label); b.type = "button";
+    b.addEventListener("click", () => { center = n.id; show("graph"); });
+    return b;
+  }
+
+  function renderAllFacts() {
+    const root = $("all-facts"); root.textContent = "";
+    const rows = onlyConflict ? data.facts.filter(f => f.conflict) : data.facts;
+    if (!rows.length) return root.appendChild(el("p", "empty", onlyConflict ? "문서들이 서로 다른 값을 말하는 사실이 없습니다." : "표시할 사실이 없습니다."));
+    root.appendChild(factTable(rows, true));
+  }
+
+  function renderEntity() {
+    const root = $("entity-facts"); root.textContent = "";
+    const n = nodeById[center];
+    if (!n) { $("entity-h").textContent = "사실"; return root.appendChild(el("p", "empty", "중심으로 삼을 엔티티가 없습니다.")); }
+    const rows = data.facts.filter(f => f.s === n.label || (f.o_is_entity && f.o === n.label));
+    $("entity-h").textContent = `${n.label} 에 대한 사실 ${rows.length}건`;
+    if (!rows.length) return root.appendChild(el("p", "empty", "이 엔티티가 나오는 사실이 없습니다."));
+    root.appendChild(factTable(rows, false));
+  }
+
+  // 엔티티 탐색
+  function recenter(id) { center = id; renderGraph(); renderEntity(); }
+  function onSearch() {
+    const q = $("search").value.trim().toLowerCase();
+    if (!q) return;
+    const hit = data.nodes.find(n => n.label.toLowerCase() === q) || data.nodes.find(n => n.label.toLowerCase().includes(q));
+    if (hit) recenter(hit.id);
+    else { $("ev-title").textContent = `"${$("search").value}" 에 해당하는 엔티티가 없습니다.`; }
+  }
+  $("search").addEventListener("change", onSearch);
+  $("search").addEventListener("keydown", e => { if (e.key === "Enter") onSearch(); });
+  $("minconf").addEventListener("input", () => { $("minconf-out").textContent = (+$("minconf").value).toFixed(2); renderGraph(); });
+
+  function css(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+  function note(text) { $("graph").hidden = true; $("graph-note").hidden = false; $("graph-note").textContent = text; }
+
+  function renderGraph() {
+    if (!data || view !== "graph") return;
+    if (typeof cytoscape === "undefined") return note("그래프 라이브러리(Cytoscape.js)를 불러오지 못했습니다. 아래 표는 그대로 쓸 수 있습니다.");
+    if (!nodeById[center]) return note("중심으로 삼을 엔티티가 없습니다.");
+    $("graph").hidden = false; $("graph-note").hidden = true;
+    $("search").value = nodeById[center].label;
+    const minConf = +$("minconf").value;
+    const dist = neighborhood(data.edges, center, 2, minConf);
+    const text = css("--text"), far = css("--node-far"), hue = css("--hue"), edge = css("--edge"), bad = css("--negative"), bg = css("--surface");
+    const els = [];
+    for (const id in dist) {
+      const n = nodeById[id]; if (!n) continue;
+      els.push({ data: { id, label: n.label, hop: dist[id], size: Math.min(20 + n.degree * 4, 44), shape: typeShape[n.type],
+        color: dist[id] === 0 ? hue : dist[id] === 1 ? text : far } });
+    }
+    for (const e of data.edges) {
+      if (e.confidence < minConf || !(e.source in dist) || !(e.target in dist)) continue;
+      els.push({ data: { id: e.id, source: e.source, target: e.target, conflict: e.conflict,
+        label: e.predicate, width: 1 + e.confidence * 2.5, opacity: 0.35 + e.confidence * 0.65 } });
+    }
+    if (cy) cy.destroy();
+    cy = cytoscape({
+      container: $("graph"), elements: els, minZoom: 0.3, maxZoom: 1.5,
+      layout: { name: "concentric", concentric: n => 10 - n.data("hop"), levelWidth: () => 1, minNodeSpacing: 110, padding: 44 },
+      style: [
+        { selector: "node", style: { "background-color": "data(color)", shape: "data(shape)", width: "data(size)", height: "data(size)", label: "data(label)", color: text,
+          "font-size": 12, "text-valign": "bottom", "text-margin-y": 5, "text-background-color": bg, "text-background-opacity": 0.85, "text-background-padding": 2 } },
+        { selector: "node[hop = 0]", style: { "font-size": 13, "font-weight": 600 } },
+        { selector: "edge", style: { width: "data(width)", opacity: "data(opacity)", "line-color": edge, "target-arrow-color": edge, "target-arrow-shape": "triangle",
+          "curve-style": "bezier", label: "data(label)", "font-size": 11, color: text, "text-rotation": "autorotate", "text-background-color": bg, "text-background-opacity": 0.85, "text-background-padding": 2 } },
+        { selector: "edge[?conflict]", style: { "line-color": bad, "target-arrow-color": bad, color: bad, "line-style": "dashed", opacity: 1 } },
+        { selector: "edge:selected", style: { "line-color": hue, "target-arrow-color": hue, color: hue, opacity: 1 } },
+        { selector: "node:selected", style: { "overlay-opacity": 0 } },
+      ],
+    });
+    // 그래프가 축소돼 맞춰져도 글자는 화면에서 12px 로 읽히게 한다.
+    const z = Math.min(cy.zoom(), 1);
+    // 선 이름은 선 위가 아니라 선 옆에 둔다. 좁은 화면에서는 선 이름을 아래 표에 맡긴다.
+    cy.style().selector("node").style("font-size", 12 / z).selector("node[hop = 0]").style("font-size", 13 / z)
+      .selector("edge").style({ "font-size": 11 / z, "text-margin-y": -9 / z, "text-opacity": z < 0.6 ? 0 : 1 }).update();
+    // 노드 이름은 그 노드에 붙은 선들과 가장 멀리 떨어진 방향에 둔다(선과 선 이름을 가리지 않게).
+    cy.nodes().forEach(n => {
+      const p = n.position();
+      const angs = n.connectedEdges().map(e => { const q = (e.source().id() === n.id() ? e.target() : e.source()).position(); return Math.atan2(q.y - p.y, q.x - p.x); });
+      let best = LABEL_DIRS[0], bestGap = -1;
+      for (const d of LABEL_DIRS) {
+        const gap = Math.min(Math.PI, ...angs.map(x => Math.abs(Math.atan2(Math.sin(x - d[2]), Math.cos(x - d[2])))));
+        if (gap > bestGap + 0.01) { best = d; bestGap = gap; }
+      }
+      n.style({ "text-halign": best[0], "text-valign": best[1], "text-margin-x": best[3] / z, "text-margin-y": best[4] / z });
+    });
+    cy.on("tap", "node", ev => recenter(ev.target.id()));
+    cy.on("tap", "edge", ev => {
+      const e = data.edges.find(x => x.id === ev.target.id());
+      showEvidence(`${nodeById[e.source].label} · ${e.predicate} · ${nodeById[e.target].label}`, e.chunks);
+    });
+    cy.on("mouseover", "node, edge", () => $("graph").style.cursor = "pointer");
+    cy.on("mouseout", "node, edge", () => $("graph").style.cursor = "");
+    renderLegend();
+  }
+
+  // 범례의 표식은 그래프의 표식을 줄인 것이다: 도형 = 유형, 파랑 = 중심, 빨간 점선 = 충돌.
+  function renderLegend() {
+    const NS = "http://www.w3.org/2000/svg", lg = $("legend"); lg.textContent = "";
+    const svg = (w, draw) => { const s = document.createElementNS(NS, "svg"); s.setAttribute("width", w); s.setAttribute("height", 12); s.setAttribute("aria-hidden", "true"); draw(s); return s; };
+    const shape = (s, kind, fill) => {
+      const tag = kind === "ellipse" ? "circle" : kind === "round-rectangle" ? "rect" : "polygon", x = document.createElementNS(NS, tag);
+      const pts = { diamond: "6,0 12,6 6,12 0,6", hexagon: "3,1 9,1 12,6 9,11 3,11 0,6", triangle: "6,0 12,12 0,12" }[kind];
+      if (tag === "circle") { x.setAttribute("cx", 6); x.setAttribute("cy", 6); x.setAttribute("r", 6); }
+      else if (tag === "rect") { x.setAttribute("x", 0.5); x.setAttribute("y", 0.5); x.setAttribute("width", 11); x.setAttribute("height", 11); x.setAttribute("rx", 3); }
+      else x.setAttribute("points", pts);
+      x.setAttribute("fill", fill); s.appendChild(x);
+    };
+    const item = (mark, label) => { const sp = el("span"); sp.append(mark, document.createTextNode(label)); lg.appendChild(sp); };
+    for (const t in typeShape) item(svg(12, s => shape(s, typeShape[t], "currentColor")), t);
+    item(svg(12, s => shape(s, "ellipse", "var(--hue)")), "중심 엔티티");
+    if (data.edges.some(e => e.conflict)) item(svg(24, s => {
+      const l = document.createElementNS(NS, "line");
+      for (const [k, v] of Object.entries({ x1: 0, y1: 6, x2: 24, y2: 6, stroke: "var(--negative)", "stroke-width": 2, "stroke-dasharray": "5 3" })) l.setAttribute(k, v);
+      s.appendChild(l);
+    }), "문서 간 값 충돌");
+    item(document.createTextNode(""), "선 굵기는 신뢰도 · 노드를 누르면 중심이 바뀌고, 선을 누르면 근거가 나옵니다");
+  }
+  matchMedia("(prefers-color-scheme: dark)").addEventListener("change", renderGraph);
+
+  // 문서 삭제: 문서를 고르면 근거 패널에 버튼이 나오고, 한 번 더 확인한 뒤에 지운다.
+  let canEdit = false;
+  function offerDelete(d) {
+    const box = $("ev-actions"), btn = (text, cls) => { const b = el("button", cls, text); b.type = "button"; return b; };
+    const ask = btn("이 문서 삭제");
+    ask.addEventListener("click", () => {
+      const n = data.facts.filter(f => f.docs.includes(d.id)).length;
+      const only = data.facts.filter(f => f.docs.length === 1 && f.docs[0] === d.id).length;
+      box.textContent = "";
+      const yes = btn("삭제", "danger"), no = btn("취소");
+      box.append(el("p", null, `이 문서가 근거인 사실 ${n}건에서 이 문서가 빠지고, 그중 다른 근거가 없는 ${only}건은 사라집니다. 파일은 지우지 않고 data/trash 로 옮깁니다.`), yes, no);
+      no.addEventListener("click", () => { box.textContent = ""; box.appendChild(ask); ask.focus(); });
+      yes.addEventListener("click", async () => {
+        yes.disabled = no.disabled = true;
+        let res, body = {};
+        try { res = await fetch("api/docs/" + encodeURIComponent(d.id), { method: "DELETE" }); body = await res.json(); } catch (e) {}
+        if (res && res.ok) {
+          try { sessionStorage.setItem(LOG_KEY, JSON.stringify([[`${d.title}: 삭제했습니다.`, "ok"]])); } catch (e) {}
+          return location.reload();
+        }
+        box.textContent = ""; box.append(el("p", "bad", body.error || "서버에 연결하지 못했습니다."), ask);
+      });
+      yes.focus();
+    });
+    box.appendChild(ask);
+  }
+
+  // 문서 올리기: `onto serve` 로 띄웠을 때만 보인다. 정적 서버에서는 /api/status 가 없어 숨긴 채로 둔다.
+  const LOG_KEY = "onto-upload-log";
+  function logLine(text, cls) { return $("upload-log").appendChild(el("p", cls, text)); }
+  async function put(file, replace) {
+    const res = await fetch("api/docs/" + encodeURIComponent(file.name) + (replace ? "?replace=1" : ""), { method: "PUT", body: file });
+    const body = await res.json().catch(() => ({ error: "서버 응답을 읽지 못했습니다." }));
+    return { status: res.status, body };
+  }
+  // 반환: 저장소가 바뀌었으면 true.
+  async function sendFile(file, replace) {
+    const line = logLine(`${file.name}: 적용하는 중입니다.`);
+    let r;
+    try { r = await put(file, replace); } catch (e) { r = { status: 0, body: { error: "서버에 연결하지 못했습니다." } }; }
+    if (r.status === 409 && !replace && /이미 있습니다/.test(r.body.error)) {
+      line.className = "bad"; line.textContent = `${file.name}: 같은 이름의 문서가 이미 있습니다.`;
+      const b = line.appendChild(el("button", null, "바꿔 넣기")); b.type = "button";
+      b.addEventListener("click", async () => { line.remove(); if (await sendFile(file, true)) finish(); });
+      return false;
+    }
+    if (r.status !== 200) { line.className = "bad"; line.textContent = r.body.error.startsWith(file.name) ? r.body.error : `${file.name}: ${r.body.error}`; return false; }
+    const b = r.body, extra = [];
+    if (b.removed) extra.push(`구절 ${b.removed}개 교체`);
+    if (b.quarantined.length) extra.push(`검증에서 ${b.quarantined.length}건 제외`);
+    if (b.warnings.length) extra.push(b.warnings.join(" / "));
+    for (const [name, why] of Object.entries(b.rejected)) extra.push(`${name} 거부: ${why}`);
+    line.className = extra.length ? "bad" : "ok";
+    line.textContent = `${b.title}: 구절 ${b.added}개 적용` + (extra.length ? ` (${extra.join(", ")})` : "");
+    return true;
+  }
+  // 결과 문구를 남긴 채 새 데이터로 화면을 다시 그린다.
+  function finish() {
+    try { sessionStorage.setItem(LOG_KEY, JSON.stringify([...$("upload-log").children].filter(p => !p.querySelector("button")).map(p => [p.textContent, p.className]))); } catch (e) {}
+    location.reload();
+  }
+  $("file").addEventListener("change", async () => {
+    const files = [...$("file").files]; $("file").value = "";
+    $("upload-log").textContent = ""; $("upload").setAttribute("aria-busy", "true");
+    let changed = false;
+    for (const f of files) changed = await sendFile(f, false) || changed;
+    $("upload").removeAttribute("aria-busy");
+    if (changed && !$("upload-log").querySelector("button")) finish();
+  });
+  async function initUpload() {
+    let st;
+    try { const res = await fetch("api/status"); if (!res.ok) return; st = await res.json(); } catch (e) { return; }
+    if (!st || !st.upload) return;
+    $("upload").hidden = false; canEdit = true;
+    $("scope").textContent = st.domain;
+    $("upload-note").textContent = (st.llm ? "머리말과 본문을 적용합니다. 본문은 Codex(OpenAI)로 전송됩니다." : "머리말만 적용합니다. 본문 추출은 꺼져 있습니다.")
+      + " 형식: .md" + (st.csv.length ? ", " + st.csv.join(", ") : "");
+    try {
+      for (const [text, cls] of JSON.parse(sessionStorage.getItem(LOG_KEY) || "[]")) logLine(text, cls);
+      sessionStorage.removeItem(LOG_KEY);
+    } catch (e) {}
+  }
+
+  load();
+  initUpload();
+})();
+</script>
+</body>
+</html>

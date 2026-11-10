@@ -1,0 +1,66 @@
+# 이야기의 골격. 장면(beat)마다 반드시 일어나는 사건(fixed)을 미리 정해 둔다.
+# 본문은 여기 없다. 유저와의 상호작용은 open 에 적힌 부분과 fixed 의 변경으로 들어온다.
+#   uses   이 장면이 쓰는 물건. 장면의 인물 중 누군가 갖고 있어야 한다.
+#   plants 이 장면이 심는 복선, pays 는 회수하는 복선. 회수는 심은 뒤에만 할 수 있다.
+viewpoint: 카엘
+locations: [왕성, 숲, 항구]
+characters:
+  카엘: {at: 왕성, aliases: [젊은 기사]}
+  세라: {at: 왕성, aliases: [마법사]}
+  도윤: {at: 숲, aliases: [늙은 사냥꾼]}
+items:
+  은빛 단검: {holder: 도윤, aliases: [단검]}
+relations:
+  - [카엘, 세라, 동맹]
+  - [카엘, 도윤, 동맹]
+beats:
+  - id: b01
+    title: 출정 전야
+    fixed:
+      - {type: act, who: 카엘, with: 세라}
+    open: [두 사람이 나누는 대화]
+    plants: [세라의 망설임]
+  - id: b02
+    title: 숲으로
+    fixed:
+      - {type: move, who: 카엘, to: 숲}
+      - {type: move, who: 세라, to: 숲}
+    open: [가는 길에 일어나는 일]
+  - id: b03
+    title: 맡겨진 단검
+    fixed:
+      - {type: give, who: 도윤, to: 카엘, item: 은빛 단검}
+    open: [도윤이 단검을 맡기는 이유]
+    plants: [단검의 내력]
+  - id: b04
+    title: 매복
+    fixed:
+      - {type: die, who: 도윤}
+    open: [도윤의 마지막 말]
+  - id: b05
+    title: 무덤 앞에서
+    fixed:
+      - {type: act, who: 카엘}
+    open: [카엘이 하는 다짐]
+  - id: b06
+    title: 배신
+    fixed:
+      - {type: relate, a: 세라, b: 카엘, kind: 적대}
+    open: [배신이 드러나는 방식]
+    pays: [세라의 망설임]
+  - id: b07
+    title: 도주
+    fixed:
+      - {type: move, who: 세라, to: 항구}
+  - id: b08
+    title: 추격
+    fixed:
+      - {type: move, who: 카엘, to: 항구}
+    open: [추격 중에 겪는 일]
+  - id: b09
+    title: 대면
+    fixed:
+      - {type: act, who: 카엘, with: 세라}
+    uses: [은빛 단검]
+    open: [대면의 결말]
+    pays: [단검의 내력]

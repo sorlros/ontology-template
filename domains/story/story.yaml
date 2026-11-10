@@ -1,0 +1,50 @@
+# 샘플 이야기. 턴마다 본문(text)과, 그 턴에 일어났다고 선언된 사건(events)을 적는다.
+# 실제 서비스에서는 스토리를 쓰는 모델이 본문과 사건을 한 번에 낸다. 여기서는 손으로 적어 LLM 없이 시험한다.
+viewpoint: 카엘
+locations: [왕성, 숲, 항구]
+characters:
+  카엘: {at: 왕성, aliases: [젊은 기사]}
+  세라: {at: 왕성, aliases: [마법사]}
+  도윤: {at: 숲, aliases: [늙은 사냥꾼]}
+items:
+  은빛 단검: {holder: 도윤, aliases: [단검]}
+relations:
+  - [카엘, 세라, 동맹]
+  - [카엘, 도윤, 동맹]
+turns:
+  - text: 카엘과 세라는 왕성의 회랑을 걸으며 내일의 출정을 이야기했다.
+    events:
+      - {type: act, who: 카엘, with: 세라}
+  - text: 날이 밝자 카엘은 세라와 함께 숲으로 향했다.
+    events:
+      - {type: move, who: 카엘, to: 숲}
+      - {type: move, who: 세라, to: 숲}
+  - text: 숲에서 기다리던 도윤이 카엘에게 단검을 건넸다.
+    events:
+      - {type: give, who: 도윤, to: 카엘, item: 은빛 단검}
+  - text: 매복한 적의 화살에 도윤이 쓰러져 숨을 거두었다.
+    events:
+      - {type: die, who: 도윤}
+  - text: 카엘은 도윤의 무덤 앞에서 그와 나눈 약속을 떠올렸다.
+    events: []
+  # 오류: 죽은 인물이 다시 행동한다.
+  - text: 도윤이 칼을 뽑아 들고 카엘의 곁에 섰다.
+    events:
+      - {type: act, who: 도윤, with: 카엘}
+  # 누락: 본문은 관계가 바뀌었다고 말하는데 사건이 없다.
+  - text: 그날 밤 세라는 카엘을 배신하고 적의 편에 섰다.
+    events: []
+  # 위 턴을 다시 생성한 것.
+  - text: 그날 밤 세라는 카엘을 배신하고 적의 편에 섰다.
+    events:
+      - {type: relate, a: 세라, b: 카엘, kind: 적대}
+  - text: 세라는 어둠을 틈타 항구로 달아났다.
+    events:
+      - {type: move, who: 세라, to: 항구}
+  # 오류: 다른 장소에 있는 인물에게 물건을 준다.
+  - text: 카엘은 세라에게 단검을 건넸다.
+    events:
+      - {type: give, who: 카엘, to: 세라, item: 은빛 단검}
+  # 대명사: 누가 죽었는지 본문만으로는 알 수 없다.
+  - text: 그는 끝내 숨을 거두었다.
+    events: []

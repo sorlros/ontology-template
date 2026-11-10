@@ -1,0 +1,17 @@
+@prefix : <urn:onto:contracts#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+# 청크 단위로 검증하므로 sh:minCount 는 쓰지 않는다(청크 하나에는 사실 일부만 있다).
+# sh:maxCount 1 은 "값이 하나여야 하는 속성" 표시다. 문서 간 충돌 탐지가 이 표시를 읽는다.
+
+:ContractShape a sh:NodeShape ; sh:targetClass :Contract ;
+    sh:property [ sh:path :hasSupplier ; sh:class :Organization ; sh:maxCount 1 ] ;
+    sh:property [ sh:path :hasBuyer ; sh:class :Organization ] ;
+    sh:property [ sh:path :supersedes ; sh:class :Contract ] ;
+    sh:property [ sh:path :amount ; sh:datatype xsd:integer ; sh:maxCount 1 ] ;
+    sh:property [ sh:path :signedOn ; sh:datatype xsd:date ; sh:maxCount 1 ] .
+
+:OrganizationShape a sh:NodeShape ; sh:targetClass :Organization ;
+    sh:property [ sh:path :hasCEO ; sh:class :Person ; sh:maxCount 1 ] ;
+    sh:property [ sh:path :locatedIn ; sh:datatype xsd:string ] .

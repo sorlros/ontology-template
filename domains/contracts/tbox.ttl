@@ -1,0 +1,21 @@
+@prefix : <urn:onto:contracts#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<urn:onto:contracts> a owl:Ontology ; owl:versionInfo "0.1" .
+
+:Organization a rdfs:Class ; rdfs:label "조직" .
+:Person a rdfs:Class ; rdfs:label "사람" .
+:Contract a rdfs:Class ; rdfs:label "계약" .
+
+:hasSupplier a owl:ObjectProperty ; rdfs:label "공급사" ; rdfs:domain :Contract ; rdfs:range :Organization .
+:hasBuyer a owl:ObjectProperty ; rdfs:label "구매사" ; rdfs:domain :Contract ; rdfs:range :Organization .
+:supersedes a owl:ObjectProperty ; rdfs:label "대체함" ; rdfs:domain :Contract ; rdfs:range :Contract .
+:hasCEO a owl:ObjectProperty ; rdfs:label "대표자" ; rdfs:domain :Organization ; rdfs:range :Person .
+
+:amount a owl:DatatypeProperty ; rdfs:label "계약금액(원)" ; rdfs:domain :Contract ; rdfs:range xsd:integer .
+:signedOn a owl:DatatypeProperty ; rdfs:label "체결일" ; rdfs:domain :Contract ; rdfs:range xsd:date .
+:locatedIn a owl:DatatypeProperty ; rdfs:label "소재지" ; rdfs:domain :Organization ; rdfs:range xsd:string .
+# 엔티티의 다른 표기. 엔티티 등록부가 이 사실로 별칭을 학습한다.
+:alias a owl:DatatypeProperty ; rdfs:label "별칭" ; rdfs:range xsd:string .
