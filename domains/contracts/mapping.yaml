@@ -1,0 +1,25 @@
+# 도메인 설정. TBox(tbox.ttl)·제약(shapes.ttl)과 함께 도메인마다 교체하는 파일이다.
+namespace: "urn:onto:contracts#"
+
+# md frontmatter → 사실. 키는 frontmatter 의 type 값.
+doc_types:
+  contract:
+    subject: {class: Contract, label_from: contract}
+    fields:
+      supplier: {predicate: hasSupplier, class: Organization}
+      buyer: {predicate: hasBuyer, class: Organization}
+      amount: {predicate: amount}
+      signed: {predicate: signedOn}
+      supersedes: {predicate: supersedes, class: Contract}
+  # 매핑 없는 유형: frontmatter 에서는 사실을 만들지 않고 본문만 LLM 추출 대상이 된다.
+  memo: {}
+
+# CSV → 사실. 키는 파일 이름. CSV 에는 frontmatter 가 없으므로 문서 메타를 여기 적는다.
+csv:
+  suppliers.csv:
+    meta: {title: 공급사 마스터, date: "2026-01-02", source: 구매팀, grade: 1, type: master}
+    subject: {class: Organization, label_from: name}
+    fields:
+      country: {predicate: locatedIn}
+      ceo: {predicate: hasCEO, class: Person}
+      aliases: {predicate: alias, split: "|"}
