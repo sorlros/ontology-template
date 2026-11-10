@@ -1,0 +1,482 @@
+{
+ "nodes": [
+  {
+   "id": "urn:onto:contracts#entity:Organization:hanbit",
+   "label": "한빛물산",
+   "type": "Organization",
+   "degree": 4
+  },
+  {
+   "id": "urn:onto:contracts#entity:Organization:daehan",
+   "label": "대한전자",
+   "type": "Organization",
+   "degree": 3
+  },
+  {
+   "id": "urn:onto:contracts#entity:Organization:mirae",
+   "label": "미래상사",
+   "type": "Organization",
+   "degree": 1
+  },
+  {
+   "id": "urn:onto:contracts#entity:Person:kim",
+   "label": "김철수",
+   "type": "Person",
+   "degree": 1
+  },
+  {
+   "id": "urn:onto:contracts#entity:Person:park",
+   "label": "박영희",
+   "type": "Person",
+   "degree": 1
+  },
+  {
+   "id": "urn:onto:contracts#entity:Contract:c1",
+   "label": "한빛-2026-01",
+   "type": "Contract",
+   "degree": 3
+  },
+  {
+   "id": "urn:onto:contracts#entity:Contract:c2",
+   "label": "한빛-2026-02",
+   "type": "Contract",
+   "degree": 3
+  },
+  {
+   "id": "urn:onto:contracts#entity:Contract:c3",
+   "label": "미래-2026-01",
+   "type": "Contract",
+   "degree": 2
+  }
+ ],
+ "edges": [
+  {
+   "id": "e0",
+   "source": "urn:onto:contracts#entity:Contract:c1",
+   "target": "urn:onto:contracts#entity:Organization:hanbit",
+   "predicate": "hasSupplier",
+   "confidence": 0.97,
+   "docs": [
+    "c-001",
+    "c-002"
+   ],
+   "chunks": [
+    "c-001#80f29dbaabdc",
+    "c-002#1a175a6be947"
+   ],
+   "conflict": false
+  },
+  {
+   "id": "e1",
+   "source": "urn:onto:contracts#entity:Contract:c1",
+   "target": "urn:onto:contracts#entity:Organization:daehan",
+   "predicate": "hasBuyer",
+   "confidence": 0.97,
+   "docs": [
+    "c-001",
+    "c-002"
+   ],
+   "chunks": [
+    "c-001#80f29dbaabdc",
+    "c-002#1a175a6be947"
+   ],
+   "conflict": false
+  },
+  {
+   "id": "e2",
+   "source": "urn:onto:contracts#entity:Contract:c2",
+   "target": "urn:onto:contracts#entity:Organization:hanbit",
+   "predicate": "hasSupplier",
+   "confidence": 0.9,
+   "docs": [
+    "c-003"
+   ],
+   "chunks": [
+    "c-003#4a2087029c81"
+   ],
+   "conflict": false
+  },
+  {
+   "id": "e3",
+   "source": "urn:onto:contracts#entity:Contract:c2",
+   "target": "urn:onto:contracts#entity:Organization:daehan",
+   "predicate": "hasBuyer",
+   "confidence": 0.9,
+   "docs": [
+    "c-003"
+   ],
+   "chunks": [
+    "c-003#4a2087029c81"
+   ],
+   "conflict": false
+  },
+  {
+   "id": "e4",
+   "source": "urn:onto:contracts#entity:Contract:c2",
+   "target": "urn:onto:contracts#entity:Contract:c1",
+   "predicate": "supersedes",
+   "confidence": 0.9,
+   "docs": [
+    "c-003"
+   ],
+   "chunks": [
+    "c-003#4a2087029c81"
+   ],
+   "conflict": false
+  },
+  {
+   "id": "e5",
+   "source": "urn:onto:contracts#entity:Contract:c3",
+   "target": "urn:onto:contracts#entity:Organization:mirae",
+   "predicate": "hasSupplier",
+   "confidence": 0.7,
+   "docs": [
+    "c-006"
+   ],
+   "chunks": [
+    "c-006#40f2d7aad6eb"
+   ],
+   "conflict": false
+  },
+  {
+   "id": "e6",
+   "source": "urn:onto:contracts#entity:Contract:c3",
+   "target": "urn:onto:contracts#entity:Organization:daehan",
+   "predicate": "hasBuyer",
+   "confidence": 0.7,
+   "docs": [
+    "c-006"
+   ],
+   "chunks": [
+    "c-006#40f2d7aad6eb"
+   ],
+   "conflict": false
+  },
+  {
+   "id": "e7",
+   "source": "urn:onto:contracts#entity:Organization:hanbit",
+   "target": "urn:onto:contracts#entity:Person:kim",
+   "predicate": "hasCEO",
+   "confidence": 0.7,
+   "docs": [
+    "c-004"
+   ],
+   "chunks": [
+    "c-004#95577b158c0e"
+   ],
+   "conflict": true
+  },
+  {
+   "id": "e8",
+   "source": "urn:onto:contracts#entity:Organization:hanbit",
+   "target": "urn:onto:contracts#entity:Person:park",
+   "predicate": "hasCEO",
+   "confidence": 0.5,
+   "docs": [
+    "c-005"
+   ],
+   "chunks": [
+    "c-005#3840e76e2853"
+   ],
+   "conflict": true
+  }
+ ],
+ "facts": [
+  {
+   "s": "한빛-2026-01",
+   "p": "hasSupplier",
+   "o": "한빛물산",
+   "o_is_entity": true,
+   "confidence": 0.97,
+   "docs": [
+    "c-001",
+    "c-002"
+   ],
+   "chunks": [
+    "c-001#80f29dbaabdc",
+    "c-002#1a175a6be947"
+   ],
+   "conflict": false
+  },
+  {
+   "s": "한빛-2026-01",
+   "p": "hasBuyer",
+   "o": "대한전자",
+   "o_is_entity": true,
+   "confidence": 0.97,
+   "docs": [
+    "c-001",
+    "c-002"
+   ],
+   "chunks": [
+    "c-001#80f29dbaabdc",
+    "c-002#1a175a6be947"
+   ],
+   "conflict": false
+  },
+  {
+   "s": "한빛-2026-02",
+   "p": "hasSupplier",
+   "o": "한빛물산",
+   "o_is_entity": true,
+   "confidence": 0.9,
+   "docs": [
+    "c-003"
+   ],
+   "chunks": [
+    "c-003#4a2087029c81"
+   ],
+   "conflict": false
+  },
+  {
+   "s": "한빛-2026-02",
+   "p": "hasBuyer",
+   "o": "대한전자",
+   "o_is_entity": true,
+   "confidence": 0.9,
+   "docs": [
+    "c-003"
+   ],
+   "chunks": [
+    "c-003#4a2087029c81"
+   ],
+   "conflict": false
+  },
+  {
+   "s": "한빛-2026-02",
+   "p": "supersedes",
+   "o": "한빛-2026-01",
+   "o_is_entity": true,
+   "confidence": 0.9,
+   "docs": [
+    "c-003"
+   ],
+   "chunks": [
+    "c-003#4a2087029c81"
+   ],
+   "conflict": false
+  },
+  {
+   "s": "미래-2026-01",
+   "p": "hasSupplier",
+   "o": "미래상사",
+   "o_is_entity": true,
+   "confidence": 0.7,
+   "docs": [
+    "c-006"
+   ],
+   "chunks": [
+    "c-006#40f2d7aad6eb"
+   ],
+   "conflict": false
+  },
+  {
+   "s": "미래-2026-01",
+   "p": "hasBuyer",
+   "o": "대한전자",
+   "o_is_entity": true,
+   "confidence": 0.7,
+   "docs": [
+    "c-006"
+   ],
+   "chunks": [
+    "c-006#40f2d7aad6eb"
+   ],
+   "conflict": false
+  },
+  {
+   "s": "한빛물산",
+   "p": "hasCEO",
+   "o": "김철수",
+   "o_is_entity": true,
+   "confidence": 0.7,
+   "docs": [
+    "c-004"
+   ],
+   "chunks": [
+    "c-004#95577b158c0e"
+   ],
+   "conflict": true
+  },
+  {
+   "s": "한빛물산",
+   "p": "hasCEO",
+   "o": "박영희",
+   "o_is_entity": true,
+   "confidence": 0.5,
+   "docs": [
+    "c-005"
+   ],
+   "chunks": [
+    "c-005#3840e76e2853"
+   ],
+   "conflict": true
+  },
+  {
+   "s": "한빛-2026-01",
+   "p": "amount",
+   "o": "100000000",
+   "o_is_entity": false,
+   "confidence": 0.97,
+   "docs": [
+    "c-001",
+    "c-002"
+   ],
+   "chunks": [
+    "c-001#80f29dbaabdc",
+    "c-002#1a175a6be947"
+   ],
+   "conflict": false
+  },
+  {
+   "s": "한빛-2026-01",
+   "p": "signedOn",
+   "o": "2026-01-10",
+   "o_is_entity": false,
+   "confidence": 0.97,
+   "docs": [
+    "c-001",
+    "c-002"
+   ],
+   "chunks": [
+    "c-001#80f29dbaabdc",
+    "c-002#1a175a6be947"
+   ],
+   "conflict": false
+  },
+  {
+   "s": "한빛-2026-02",
+   "p": "amount",
+   "o": "150000000",
+   "o_is_entity": false,
+   "confidence": 0.9,
+   "docs": [
+    "c-003"
+   ],
+   "chunks": [
+    "c-003#4a2087029c81"
+   ],
+   "conflict": false
+  },
+  {
+   "s": "미래-2026-01",
+   "p": "amount",
+   "o": "80000000",
+   "o_is_entity": false,
+   "confidence": 0.7,
+   "docs": [
+    "c-006"
+   ],
+   "chunks": [
+    "c-006#40f2d7aad6eb"
+   ],
+   "conflict": false
+  },
+  {
+   "s": "한빛물산",
+   "p": "alias",
+   "o": "Hanbit",
+   "o_is_entity": false,
+   "confidence": 0.7,
+   "docs": [
+    "c-004"
+   ],
+   "chunks": [
+    "c-004#95577b158c0e"
+   ],
+   "conflict": false
+  },
+  {
+   "s": "한빛물산",
+   "p": "alias",
+   "o": "한빛물산(주)",
+   "o_is_entity": false,
+   "confidence": 0.91,
+   "docs": [
+    "c-002",
+    "c-004"
+   ],
+   "chunks": [
+    "c-002#1a175a6be947",
+    "c-004#95577b158c0e"
+   ],
+   "conflict": false
+  }
+ ],
+ "docs": [
+  {
+   "id": "c-001",
+   "title": "한빛물산 공급계약서(법무 원본)",
+   "date": "2026-01-10",
+   "source": "법무팀",
+   "grade": 1
+  },
+  {
+   "id": "c-002",
+   "title": "한빛물산 공급계약 회계 사본",
+   "date": "2026-01-12",
+   "source": "재무팀",
+   "grade": 2
+  },
+  {
+   "id": "c-003",
+   "title": "한빛물산 공급계약 변경 계약서",
+   "date": "2026-03-02",
+   "source": "법무팀",
+   "grade": 1
+  },
+  {
+   "id": "c-004",
+   "title": "suppliers",
+   "date": "2026-01-01",
+   "source": "구매시스템",
+   "grade": 2
+  },
+  {
+   "id": "c-005",
+   "title": "인사 메모 2026-04",
+   "date": "2026-04-15",
+   "source": "경영지원팀",
+   "grade": 3
+  },
+  {
+   "id": "c-006",
+   "title": "미래상사 공급계약서",
+   "date": "2026-02-20",
+   "source": "구매팀",
+   "grade": 2
+  }
+ ],
+ "evidence": {
+  "c-001#80f29dbaabdc": {
+   "doc": "c-001",
+   "heading": "@frontmatter",
+   "text": "contract: 한빛-2026-01\nsupplier: 한빛물산\nbuyer: 대한전자\namount: 100000000\nsigned: '2026-01-10'"
+  },
+  "c-002#1a175a6be947": {
+   "doc": "c-002",
+   "heading": "@frontmatter",
+   "text": "contract: 한빛-2026-01\nsupplier: 한빛물산(주)\nbuyer: 대한전자\namount: 100000000\nsigned: '2026-01-10'"
+  },
+  "c-003#4a2087029c81": {
+   "doc": "c-003",
+   "heading": "@frontmatter",
+   "text": "contract: 한빛-2026-02\nsupplier: 한빛물산\nbuyer: 대한전자\namount: 150000000\nsupersedes: 한빛-2026-01"
+  },
+  "c-004#95577b158c0e": {
+   "doc": "c-004",
+   "heading": "@row",
+   "text": "{\"aliases\": \"한빛물산(주)|Hanbit\", \"ceo\": \"김철수\", \"country\": \"KR\", \"name\": \"한빛물산\"}"
+  },
+  "c-005#3840e76e2853": {
+   "doc": "c-005",
+   "heading": "인사 > 대표자 변경",
+   "text": "2026년 4월부로 한빛물산의 대표자가 김철수에서 박영희로 교체되었다."
+  },
+  "c-006#40f2d7aad6eb": {
+   "doc": "c-006",
+   "heading": "@frontmatter",
+   "text": "contract: 미래-2026-01\nsupplier: 미래상사\nbuyer: 대한전자\namount: 80000000"
+  }
+ }
+}
