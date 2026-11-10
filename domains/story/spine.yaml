@@ -1,0 +1,98 @@
+# 주요 사건만 정해 둔 뼈대와, 첫 구간의 장면 카드.
+#   when    이야기 속 날짜(1일부터)
+#   needs   이 사건이 일어나려면 갖춰져 있어야 하는 것. [alive, 인물] [at, 인물, 장소] [together, 인물, 인물] [has, 인물, 물건] [rel, 인물, 인물, 관계]
+#           [fact, 사실] 은 그 사실이 이미 성립해 있어야 한다는 뜻이다.
+#   facts   이 이야기에서 성립하는 사실의 이름. 약속, 고백, 드러난 비밀처럼 위치·소지·관계로 적을 수 없는 것.
+#           사건의 {type: mark, who: 인물, fact: 사실} 이 성립시킨다.
+#   because 이 사건을 일으킨 앞의 사건
+#   intensity 강도 1~5. dilemma 는 주인공이 무엇 사이에서 고르는지, cost 는 이 사건으로 되돌릴 수 없게 된 것
+viewpoint: 카엘
+locations: [왕성, 숲, 항구]
+characters:
+  카엘: {at: 왕성, role: protagonist}
+  세라: {at: 왕성, role: antagonist}
+  도윤: {at: 숲, role: ally}
+items:
+  은빛 단검: {holder: 도윤}
+relations:
+  - [카엘, 세라, 동맹]
+  - [카엘, 도윤, 동맹]
+facts: [세라가 매복을 알린 사실이 드러났다]
+spine:
+  - id: e01
+    when: 1
+    title: 출정 전야
+    events:
+      - {type: act, who: 카엘, with: 세라}
+    because: []
+    meaning: 세라가 무언가를 숨기고 있다는 첫 낌새
+    intensity: 1
+    dilemma: 세라의 낌새를 캐물을지, 믿고 넘어갈지
+    plants: [세라의 망설임]
+  - id: e02
+    when: 3
+    title: 맡겨진 단검
+    events:
+      - {type: give, who: 도윤, to: 카엘, item: 은빛 단검}
+    because: [e01]
+    meaning: 도윤이 자신의 끝을 예감하고 단검을 넘긴다
+    intensity: 2
+    plants: [단검의 내력]
+  - id: e03
+    when: 3
+    title: 매복
+    events:
+      - {type: die, who: 도윤}
+    because: [e02]
+    meaning: 카엘이 처음으로 스승을 잃는다
+    intensity: 4
+    cost: 카엘은 스승을 잃고, 단검의 내력을 물을 사람이 없어진다
+  - id: e04
+    when: 10
+    title: 배신
+    needs:
+      - [together, 세라, 카엘]
+    events:
+      - {type: mark, who: 세라, with: 카엘, fact: 세라가 매복을 알린 사실이 드러났다}
+      - {type: relate, a: 세라, b: 카엘, kind: 적대}
+    because: [e01, e03]
+    meaning: 매복을 알린 사람이 세라였음이 드러난다
+    intensity: 3
+    dilemma: 세라를 붙잡아 이유를 들을지, 적으로 돌릴지
+    cost: 두 사람의 동맹이 끝난다
+    pays: [세라의 망설임]
+  - id: e05
+    when: 12
+    title: 대면
+    needs:
+      - [at, 세라, 항구]
+      - [has, 카엘, 은빛 단검]
+      - [fact, 세라가 매복을 알린 사실이 드러났다]
+    events:
+      - {type: act, who: 카엘, with: 세라}
+    because: [e04]
+    meaning: 카엘이 단검을 쥔 채 세라와 마주 선다
+    intensity: 5
+    dilemma: 스승의 복수를 할지, 세라의 사정을 받아들일지
+    cost: 어느 쪽을 택해도 예전의 카엘로는 돌아갈 수 없다
+    pays: [단검의 내력]
+# e01 과 e02 사이의 구간
+segment:
+  - id: s1
+    title: 길을 나서다
+    fixed:
+      - {type: move, who: 카엘, to: 숲}
+    open: [길에서 나누는 말]
+    choices:
+      - {id: c1, label: 말없이 걷는다, kind: tone}
+      - {id: c2, label: 세라와 함께 간다, kind: action, events: [{type: move, who: 세라, to: 숲}]}
+      - {id: c3, label: 도윤을 왕성으로 부른다, kind: action, events: [{type: move, who: 도윤, to: 왕성}]}
+      - {id: c4, label: 세라를 벤다, kind: action, events: [{type: die, who: 세라}]}
+      - {id: c5, label: 세라에게 단검을 건넨다, kind: action, events: [{type: give, who: 카엘, to: 세라, item: 은빛 단검}]}
+      - {id: c6, label: 지난 일을 떠올린다, kind: tone}
+      - {id: c7, label: 돌아가면 세라에게 그날 밤의 일을 묻겠다고 다짐한다, kind: action, events: [{type: mark, who: 카엘, fact: 카엘이 세라에게 그날 밤의 일을 묻기로 다짐했다}]}
+  - id: s2
+    title: 숲의 오두막
+    fixed:
+      - {type: act, who: 카엘, with: 도윤}
+    open: [도윤의 첫마디]
