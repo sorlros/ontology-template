@@ -1,0 +1,21 @@
+[project]
+name = "onto"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = ["rdflib>=7", "pyshacl>=0.26", "pyyaml>=6"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+
+[project.scripts]
+onto = "onto.cli:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
